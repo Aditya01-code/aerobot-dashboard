@@ -115,7 +115,7 @@ def show_home(nav_callback):
         local_img_path = "assets/dashboard_cover3.png"
         img_src = ""
         if not os.path.exists(local_img_path):
-            local_img_path = "assets/dashboard_cover3.jpg"
+            local_img_path = "assets/dashboard_cover3.png"
 
         if os.path.exists(local_img_path):
             base64_img = get_base64_image(local_img_path)
@@ -186,4 +186,5 @@ def show_home(nav_callback):
             </div>
         </div>
         """, unsafe_allow_html=True)
+
         st.button("Enter Neural Lab", on_click=nav_callback, args=("LLM",), use_container_width=True, key="btn_llm")
