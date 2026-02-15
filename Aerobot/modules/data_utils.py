@@ -33,7 +33,6 @@ def normalize_columns(df):
         'Destination': ['destination', 'dest', 'to']
     }
     
-    # Clean up column names (remove spaces, lowercase)
     df.columns = [str(c).strip() for c in df.columns]
     current_cols_lower = {c.lower(): c for c in df.columns}
     
@@ -46,13 +45,10 @@ def normalize_columns(df):
     return df
 
 def engineer_network_features(df):
-    # 1. CRITICAL FIX: Convert 'Date' column to Datetime objects if it exists
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
-    # 2. If Date is missing or failed conversion, generate it
     if 'Date' not in df.columns or df['Date'].isnull().all():
-        # Fallback for datasets like Air-Clean.csv
         if 'validFrom' in df.columns:
              df['Date'] = pd.to_datetime(df['validFrom'], errors='coerce').fillna(datetime.now())
         else:
@@ -61,7 +57,6 @@ def engineer_network_features(df):
             df['Date'] = [end_date - timedelta(days=int(d)) for d in days_back]
             df['Date'] = pd.to_datetime(df['Date'])
 
-    # Ensure Origin/Dest exist
     airport_codes = list(AIRPORT_COORDINATES.keys())
     
     if 'Origin' not in df.columns:
@@ -69,10 +64,8 @@ def engineer_network_features(df):
     if 'Destination' not in df.columns:
         df['Destination'] = np.random.choice(airport_codes, size=len(df))
     
-    # Create Route Column
     df['Route'] = df['Origin'].astype(str) + " - " + df['Destination'].astype(str)
     
-    # Map Coordinates
     df['Origin_Lat'] = df['Origin'].map(lambda x: AIRPORT_COORDINATES.get(x, {}).get('lat'))
     df['Origin_Lon'] = df['Origin'].map(lambda x: AIRPORT_COORDINATES.get(x, {}).get('lon'))
     df['Dest_Lat'] = df['Destination'].map(lambda x: AIRPORT_COORDINATES.get(x, {}).get('lat'))
@@ -81,36 +74,23 @@ def engineer_network_features(df):
     return df
 
 def engineer_financial_features(df):
-    # 1. Fix Names FIRST
     df = normalize_columns(df)
-    
-    # 2. Add Network Data (Includes Date Fix)
     df = engineer_network_features(df)
     
-    # 3. Handle Missing Operational Columns (Simulation Logic)
-    
-    # Flight Distance
     if 'Flight Distance' not in df.columns:
         df['Flight Distance'] = np.random.randint(200, 4000, size=len(df))
-        
-    # Class
+    
     if 'Class' not in df.columns:
         df['Class'] = np.random.choice(['Eco', 'Business', 'Eco Plus'], size=len(df))
 
-    # --- Delay Logic ---
     if 'Departure Delay in Minutes' not in df.columns:
-        # Simulation if missing
         conditions = [
             np.random.rand(len(df)) < 0.7,
             np.random.rand(len(df)) < 0.9
         ]
-        choices = [
-            0,
-            np.random.randint(5, 30, size=len(df))
-        ]
+        choices = [0, np.random.randint(5, 30, size=len(df))]
         df['Departure Delay in Minutes'] = np.select(conditions, choices, default=np.random.randint(30, 120, size=len(df)))
 
-    # 4. Financial Math
     df['Ticket_Price'] = 50 + (df['Flight Distance'] * 0.12)
     df['Ticket_Price'] = df['Ticket_Price'] * np.random.uniform(0.8, 1.5, size=len(df))
     
@@ -133,10 +113,31 @@ def load_data():
             return None
     return None
 
+# --- EMBEDDED DUMMY GENERATOR (FIXES THE ERROR) ---
 def generate_dummy_data_file():
-    from dummy_data_generator import generate_dummy_csv
+    """Generates sample data directly without needing external files."""
     try:
-        generate_dummy_csv()
+        # Create data directory if not exists
+        if not os.path.exists("data"):
+            os.makedirs("data")
+
+        n_rows = 1000
+        data = {
+            'Gender': np.random.choice(['Male', 'Female'], n_rows),
+            'Customer Type': np.random.choice(['Loyal Customer', 'disloyal Customer'], n_rows),
+            'Age': np.random.randint(18, 80, n_rows),
+            'Type of Travel': np.random.choice(['Personal', 'Business'], n_rows),
+            'Class': np.random.choice(['Eco', 'Business', 'Eco Plus'], n_rows),
+            'Flight Distance': np.random.randint(100, 4000, n_rows),
+            'Departure Delay in Minutes': np.random.randint(0, 100, n_rows),
+            'Arrival Delay in Minutes': np.random.randint(0, 100, n_rows),
+        }
+        df = pd.DataFrame(data)
+        
+        # Save
+        file_path = "data/airline_dataset.csv"
+        df.to_csv(file_path, index=False)
         return True
-    except:
+    except Exception as e:
+        st.error(f"Failed to generate data: {e}")
         return False
