@@ -80,7 +80,7 @@ def show_dashboard():
     with col_image:
         local_img_path = "assets/dashboard_cover3.png"
         if not os.path.exists(local_img_path):
-            local_img_path = "assets/dashboard_cover3.jpg"
+            local_img_path = "assets/dashboard_cover3.png"
 
         if os.path.exists(local_img_path):
             # This is now instant after the first load thanks to @st.cache_data
@@ -279,3 +279,4 @@ def show_dashboard():
     with st.expander("📂 View Detailed Data"):
 
         st.dataframe(df)
+
