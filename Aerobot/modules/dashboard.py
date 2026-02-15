@@ -78,9 +78,9 @@ def show_dashboard():
                     st.error(f"Error: {e}")
 
     with col_image:
-        local_img_path = "assets/dashboard_cover.png"
+        local_img_path = "assets/dashboard_cover3.png"
         if not os.path.exists(local_img_path):
-            local_img_path = "assets/dashboard_cover.jpg"
+            local_img_path = "assets/dashboard_cover3.jpg"
 
         if os.path.exists(local_img_path):
             # This is now instant after the first load thanks to @st.cache_data
@@ -277,4 +277,5 @@ def show_dashboard():
         st.info("Geographic data not available.")
 
     with st.expander("📂 View Detailed Data"):
+
         st.dataframe(df)
